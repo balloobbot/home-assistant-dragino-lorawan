@@ -1,6 +1,7 @@
 """Dragino door and water leak sensors."""
 
 from datetime import datetime
+from math import floor
 from typing import override
 
 from lorawan_connection import Device, DeviceDescriptor, DeviceEvent, EventType
@@ -23,18 +24,28 @@ class ContactDevice(Device):
         self.last_duration: int | None = None
         self._updated: datetime | None = None
 
+    @property
+    def battery_percentage(self) -> int | None:
+        """Estimate charge using the device profile's voltage range."""
+        if self.battery_voltage is None:
+            return None
+        voltage = min(max(self.battery_voltage, 2.1), 3.1)
+        return floor((voltage - 2.1) / (3.1 - 2.1) * 100 + 0.5)
+
     @override
     def handle_event(self, event: DeviceEvent) -> None:
         if self.closed or event.type != EventType.UPLINK or event.f_port != 10:
             return
         data = event.data
-        if len(data) != 10 or data[2] not in (self.mode, 3):
+        if len(data) < 3 or data[2] not in (self.mode, 3):
+            return
+        if len(data) not in ((9, 10) if data[2] == 2 else (10,)):
             return
         if self._updated is not None and event.received_at < self._updated:
             return
         self.active = bool(data[0] & self.status_mask)
         self.battery_voltage = (int.from_bytes(data[:2], "big") & 0x3FFF) / 1000
-        self.alarm = bool(data[9] & 1)
+        self.alarm = bool(data[9] & 1) if len(data) == 10 else None
         self.event_count = (
             int.from_bytes(data[3:6], "big") if data[2] == self.mode else None
         )

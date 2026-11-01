@@ -287,7 +287,7 @@ class ContactSensor(LoRaWANEntity[DraginoDevice], SensorEntity):
 
 
 class DraginoBattery(LoRaWANEntity[DraginoDevice], SensorEntity):
-    """Represent the battery level reported through LoRaWAN status."""
+    """Represent the device battery percentage."""
 
     coordinator: DraginoCoordinator
 
@@ -299,4 +299,8 @@ class DraginoBattery(LoRaWANEntity[DraginoDevice], SensorEntity):
     @property
     @override
     def native_value(self) -> float | None:
-        return self.device.battery_level
+        if (battery_level := self.device.battery_level) is not None:
+            return battery_level
+        if isinstance(self.device, (LDS02, LWL02)):
+            return self.device.battery_percentage
+        return None

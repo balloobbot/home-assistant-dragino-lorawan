@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from lorawan_connection import DeviceDescriptor, StatusEvent
+from lorawan_connection import DeviceDescriptor, StatusEvent, UplinkEvent
 from lorawan_connection.mock import MockConnection
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -40,7 +40,7 @@ async def test_battery_status(
     mock_connection: MockConnection,
     descriptor: DeviceDescriptor,
 ) -> None:
-    """Expose status percentages without guessing from voltage."""
+    """Expose LoRaWAN status for every battery-powered model."""
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.get("sensor.garden_battery").state == "unknown"
@@ -64,4 +64,46 @@ async def test_battery_status(
         mock_connection.emit(replace(event, **updates))
         await hass.async_block_till_done()
         assert hass.states.get("sensor.garden_battery").state == expected
+    await hass.config_entries.async_unload(config_entry.entry_id)
+
+
+@pytest.mark.usefixtures("connection_entry")
+async def test_uplink_battery_fallback(
+    hass, config_entry, mock_connection, descriptor
+) -> None:
+    """Prefer status, preserve zero, and fall back to the profile estimate."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    # LHT65 has no voltage-to-percentage calculation in the reference profiles.
+    payload = {
+        "lht65": (2, "0b88010001f40200000000"),
+        "lds02": (10, "0b880100000000000000"),
+        "lwl02": (10, "0b8802000000000000"),
+    }[descriptor.model_id]
+    mock_connection.emit(
+        UplinkEvent(
+            descriptor=descriptor,
+            received_at=datetime.now(UTC),
+            f_port=payload[0],
+            data=bytes.fromhex(payload[1]),
+        )
+    )
+    await hass.async_block_till_done()
+    expected = "unknown" if descriptor.model_id == "lht65" else "85"
+    assert hass.states.get("sensor.garden_battery").state == expected
+    status = StatusEvent(
+        descriptor=descriptor,
+        received_at=datetime.now(UTC),
+        battery_level=0,
+        battery_level_unavailable=False,
+    )
+    mock_connection.emit(status)
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.garden_battery").state == "0"
+    mock_connection.emit(replace(status, battery_level=72))
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.garden_battery").state == "72"
+    mock_connection.emit(replace(status, battery_level_unavailable=True))
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.garden_battery").state == expected
     await hass.config_entries.async_unload(config_entry.entry_id)

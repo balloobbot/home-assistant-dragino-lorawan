@@ -74,6 +74,9 @@ async def test_contact_entities(
     assert hass.states.get("sensor.garden_battery_voltage").state == (
         "2.952" if model is LDS02 else "3.102"
     )
+    assert hass.states.get("sensor.garden_battery").state == (
+        "85" if model is LDS02 else "100"
+    )
     assert hass.states.get("sensor.garden_event_count").state == (
         "7091" if model is LDS02 else "4"
     )
@@ -106,7 +109,7 @@ async def test_contact_entities(
     for invalid in (
         replace(event, data=active, f_port=2),
         replace(event, data=b""),
-        replace(event, data=active[:9]),
+        replace(event, data=active[:8]),
         replace(event, data=active[:2] + b"\x09" + active[3:]),
         event,
     ):
@@ -151,3 +154,65 @@ async def test_diagnostic_defaults(
         assert entity.entity_category is er.EntityCategory.DIAGNOSTIC
         assert hass.states.get(entity_id) is None
     await hass.config_entries.async_unload(config_entry.entry_id)
+
+
+@pytest.mark.parametrize(
+    ("millivolts", "expected"),
+    [
+        (2000, 0),
+        (2100, 0),
+        (2600, 50),
+        (2225, 13),
+        (2625, 52),
+        (2952, 85),
+        (3000, 90),
+        (3100, 100),
+        (3300, 100),
+    ],
+)
+def test_profile_battery_estimate(model, descriptor, millivolts, expected) -> None:
+    """Match profile clamping and JavaScript rounding for both models."""
+    device = model(descriptor)
+    assert device.battery_percentage is None
+    payload = (
+        (millivolts | (model.status_mask << 8)).to_bytes(2, "big")
+        + bytes([model.mode])
+        + bytes(7)
+    )
+    device.handle_event(
+        UplinkEvent(
+            descriptor=descriptor,
+            received_at=datetime.now(UTC),
+            f_port=10,
+            data=payload,
+        )
+    )
+    assert device.battery_percentage == expected
+
+
+def test_nine_byte_leak_report() -> None:
+    """Decode the LWL02 profile's nine-byte leak report."""
+    brand, model_id = LWL02.identifiers["tts"]
+    descriptor = DeviceDescriptor(
+        network_id="network",
+        stack="tts",
+        dev_eui="0201010101010101",
+        name="Leak",
+        application_id="app",
+        profile_id="profile",
+        brand_id=brand,
+        model_id=model_id,
+    )
+    device = LWL02(descriptor)
+    device.handle_event(
+        UplinkEvent(
+            descriptor=descriptor,
+            received_at=datetime.now(UTC),
+            f_port=10,
+            data=bytes.fromhex("4b8802000004000005"),
+        )
+    )
+    assert device.active is True
+    assert device.event_count == 4
+    assert device.last_duration == 5
+    assert device.battery_percentage == 85

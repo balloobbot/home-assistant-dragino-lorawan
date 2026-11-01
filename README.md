@@ -42,9 +42,11 @@ Battery percentage is enabled by default. Battery voltage, event count, and
 event duration are diagnostic entities disabled by default; enable them in the
 entity settings if needed.
 
-Battery percentage comes from LoRaWAN device-status reports. It remains unknown
-until the network server supplies a battery level. Battery voltage comes from
-sensor uplinks; the integration does not estimate a percentage from voltage.
+Battery percentage uses LoRaWAN device-status reports when available. LDS02 and
+LWL02 otherwise estimate it from uplink voltage, following the
+[device profile decoders](https://github.com/BenAhrdt/LoRaWANDeviceProfiles/tree/main/DeviceProfiles/Dragino):
+2.1 V is 0% and 3.1 V is 100%, with values clamped to that range. LHT65 battery
+percentage remains unknown until a status report supplies it.
 
 Readings remain unknown until an uplink or status report supplies them.
 
