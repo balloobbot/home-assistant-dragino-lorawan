@@ -1,0 +1,136 @@
+"""Dragino device models."""
+
+from datetime import datetime
+import logging
+from typing import override
+
+from lorawan_connection import (
+    Device,
+    DeviceCollection,
+    DeviceDescriptor,
+    DeviceEvent,
+    EventType,
+)
+
+from .lht65 import LHT65
+
+_LOGGER = logging.getLogger(__name__)
+
+VENDOR_ID = 676
+
+
+class LT22222(Device):
+    """Model for the Dragino LT-22222-L."""
+
+    model_name = "LT-22222-L"
+
+    identifiers = {
+        "chirpstack": (VENDOR_ID, "cb0a7bef-eaa0-4c61-a0b6-ce33e6ecbc4f"),
+        "tts": ("dragino", "lt22222-l"),
+    }
+
+    def __init__(self, descriptor: DeviceDescriptor) -> None:
+        """Initialize the device."""
+        super().__init__(descriptor)
+        self.mode: int | None = None
+        self.relays: dict[int, bool | None] = {1: None, 2: None}
+        self.digital_outputs: dict[int, bool | None] = {1: None, 2: None}
+        self.digital_inputs: dict[int, bool | None] = {1: None, 2: None}
+        self.voltages: dict[int, float | None] = {1: None, 2: None}
+        self.currents: dict[int, float | None] = {1: None, 2: None}
+        self.digital_counts: dict[int, int | None] = {1: None, 2: None}
+        self.voltage_count: int | None = None
+
+    @override
+    def handle_event(self, event: DeviceEvent) -> None:
+        if self.closed or event.type != EventType.UPLINK:
+            return
+        data = event.data
+        if event.f_port != 2 or len(data) != 11:
+            return
+        # Trigger reports contain flags, not input measurements or output states.
+        if not 1 <= (data[10] & 0x3F) <= 5:
+            _LOGGER.debug("Ignoring LT-22222-L report mode %s", data[10] & 0x3F)
+            return
+        mode = data[10] & 0x3F
+        relays: dict[int, bool | None] = {
+            1: bool(data[8] & 0x80),
+            2: bool(data[8] & 0x40),
+        }
+        digital_outputs: dict[int, bool | None] = {
+            1: bool(data[8] & 1),
+            2: bool(data[8] & 2),
+        }
+        digital_inputs: dict[int, bool | None] = {1: None, 2: None}
+        voltages: dict[int, float | None] = {1: None, 2: None}
+        currents: dict[int, float | None] = {1: None, 2: None}
+        digital_counts: dict[int, int | None] = {1: None, 2: None}
+        voltage_count = None
+
+        if mode in (1, 5):
+            voltages = {
+                1: int.from_bytes(data[0:2], signed=True) / 1000,
+                2: int.from_bytes(data[2:4], signed=True) / 1000,
+            }
+        if mode in (1, 3, 5):
+            currents[1] = int.from_bytes(data[4:6], signed=True) / 1000
+        if mode in (1, 3):
+            currents[2] = int.from_bytes(data[6:8], signed=True) / 1000
+        if mode == 1:
+            digital_inputs = {1: bool(data[8] & 8), 2: bool(data[8] & 16)}
+        if mode in (2, 3, 4):
+            digital_counts[1] = int.from_bytes(data[0:4])
+        if mode == 2:
+            digital_counts[2] = int.from_bytes(data[4:8])
+        if mode == 4:
+            voltage_count = int.from_bytes(data[4:8])
+        if mode == 5:
+            digital_counts[1] = int.from_bytes(data[6:8])
+
+        self.mode = mode
+        self.relays = relays
+        self.digital_outputs = digital_outputs
+        self.digital_inputs = digital_inputs
+        self.voltages = voltages
+        self.currents = currents
+        self.digital_counts = digital_counts
+        self.voltage_count = voltage_count
+        self.notify()
+
+    async def async_set_relay(
+        self, channel: int, on: bool, *, expires_at: datetime | None = None
+    ) -> None:
+        """Set a relay and wait for acknowledgement."""
+        if channel not in (1, 2):
+            raise ValueError("Relay channel must be 1 or 2")
+        states = [0x11, 0x11]
+        states[channel - 1] = int(on)
+        await self.async_send_downlink(
+            data=bytes((0x03, *states)),
+            f_port=2,
+            expires_at=expires_at,
+        )
+
+    async def async_set_digital_output(
+        self, channel: int, on: bool, *, expires_at: datetime | None = None
+    ) -> None:
+        """Enable an active-low output and await its command acknowledgement."""
+        if channel not in (1, 2):
+            raise ValueError("Digital output channel must be 1 or 2")
+        # The protocol includes DO3 even though this model has no third output.
+        states = [0x11, 0x11, 0x11]
+        states[channel - 1] = int(on)
+        await self.async_send_downlink(
+            data=bytes((0x02, *states)),
+            f_port=2,
+            expires_at=expires_at,
+        )
+
+
+type DraginoDevice = LT22222 | LHT65
+
+
+class DraginoDevices(DeviceCollection[DraginoDevice]):
+    """Supported Dragino catalog models."""
+
+    DEVICES = (LT22222, LHT65)

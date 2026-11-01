@@ -1,0 +1,34 @@
+[project]
+name = "home-assistant-dragino-lorawan"
+version = "0.1.0"
+requires-python = ">=3.14.2"
+dependencies = []
+
+[dependency-groups]
+dev = ["homeassistant>=2026.11.0b0", "pytest-home-assistant", "lorawan-connection==1.3.0", "pytest-cov", "ruff", "hassil", "ha-ffmpeg"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-p no:respx"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["custom_components"]
+combine-as-imports = true
+
+[tool.uv.sources]
+homeassistant = { git = "https://github.com/home-assistant/core", rev = "8e864cd3f180dbbe7fba8fcf29138cb0d3b0b988" }
+pytest-home-assistant = { git = "https://github.com/home-assistant/core", rev = "8e864cd3f180dbbe7fba8fcf29138cb0d3b0b988", subdirectory = "packages/pytest-home-assistant" }

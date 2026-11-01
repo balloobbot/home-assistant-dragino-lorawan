@@ -1,0 +1,28 @@
+{
+  "domain": "dragino_lorawan",
+  "name": "Dragino LoRaWAN",
+  "codeowners": [
+    "@balloob"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "lorawan"
+  ],
+  "documentation": "https://github.com/balloobbot/home-assistant-dragino-lorawan",
+  "integration_type": "hub",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/balloobbot/home-assistant-dragino-lorawan/issues",
+  "lorawan": [
+    [
+      "chirpstack",
+      676
+    ],
+    [
+      "tts",
+      "dragino"
+    ]
+  ],
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

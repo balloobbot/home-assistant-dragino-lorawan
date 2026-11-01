@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "21 7 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        homeassistant: [pinned, dev]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.14"
+      - run: uv sync --frozen --group dev
+      - if: matrix.homeassistant == 'dev'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: home-assistant/core
+          ref: dev
+          path: .core
+          persist-credentials: false
+      - if: matrix.homeassistant == 'dev'
+        run: |
+          uv pip install -e .core -e .core/packages/pytest-home-assistant
+          cd .core
+          ../.venv/bin/python -m script.translations develop --integration sensor
+      - run: uv run --no-sync python script/prepare_tests.py
+      - run: uv run --no-sync pytest --disable-socket --allow-unix-socket --cov=custom_components --cov-report=term-missing
+      - run: uv run --no-sync ruff check custom_components tests script
+      - run: uv run --no-sync ruff format --check custom_components tests script
+
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: home-assistant/actions/hassfest@master

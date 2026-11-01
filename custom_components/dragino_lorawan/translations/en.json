@@ -1,0 +1,64 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Dragino is already configured",
+      "no_lorawan_connections": "Set up a LoRaWAN connection first.",
+      "no_supported_devices": "No supported Dragino devices were found on your LoRaWAN connections.",
+      "single_instance_allowed": "Dragino is already configured"
+    },
+    "step": {
+      "confirm": {
+        "description": "Set up Dragino devices from your LoRaWAN connections."
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "digital_input": {
+        "name": "Digital input {channel}"
+      }
+    },
+    "sensor": {
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "current": {
+        "name": "Current {channel}"
+      },
+      "digital_count": {
+        "name": "Digital count {channel}"
+      },
+      "external_count": {
+        "name": "External count"
+      },
+      "external_temperature": {
+        "name": "External temperature"
+      },
+      "external_voltage": {
+        "name": "External voltage"
+      },
+      "voltage": {
+        "name": "Voltage {channel}"
+      },
+      "voltage_count": {
+        "name": "Voltage count {channel}"
+      }
+    },
+    "switch": {
+      "digital_output": {
+        "name": "Digital output {channel}"
+      },
+      "relay": {
+        "name": "Relay {channel}"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Unable to send the command. Check the LoRaWAN connection and the API key\u2019s write permission."
+    },
+    "command_timeout": {
+      "message": "Timed out waiting for device acknowledgement."
+    }
+  }
+}
