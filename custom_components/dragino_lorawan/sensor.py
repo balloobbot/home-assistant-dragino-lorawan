@@ -165,6 +165,7 @@ LHT65_SENSORS = (
     ),
     LHT65SensorDescription(
         key="battery_voltage",
+        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="battery_voltage",
         device_class=SensorDeviceClass.VOLTAGE,
@@ -237,6 +238,7 @@ class ContactSensorDescription(SensorEntityDescription):
 CONTACT_SENSORS = (
     ContactSensorDescription(
         key="battery_voltage",
+        entity_registry_enabled_default=False,
         translation_key="battery_voltage",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -246,12 +248,16 @@ CONTACT_SENSORS = (
     ),
     ContactSensorDescription(
         key="event_count",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
         translation_key="event_count",
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda device: device.event_count,
     ),
     ContactSensorDescription(
         key="last_duration",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
         translation_key="last_duration",
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.MINUTES,

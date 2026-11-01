@@ -43,7 +43,7 @@ def mock_connection(descriptor: DeviceDescriptor) -> MockConnection:
     return MockConnection([descriptor], stack_type=descriptor.stack)
 
 
-@pytest.mark.usefixtures("connection_entry")
+@pytest.mark.usefixtures("connection_entry", "entity_registry_enabled_by_default")
 async def test_contact_entities(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
@@ -129,4 +129,25 @@ async def test_contact_entities(
     mock_connection.emit(RemovedEvent(descriptor=descriptor))
     await hass.async_block_till_done()
     assert hass.states.get(binary) is None
+    await hass.config_entries.async_unload(config_entry.entry_id)
+
+
+@pytest.mark.usefixtures("connection_entry")
+async def test_diagnostic_defaults(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Keep battery enabled and optional diagnostics disabled."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    registry = er.async_get(hass)
+    battery = registry.async_get("sensor.garden_battery")
+    assert battery.disabled_by is None
+    assert battery.entity_category is er.EntityCategory.DIAGNOSTIC
+    for name in ("battery_voltage", "event_count", "last_event_duration"):
+        entity_id = f"sensor.garden_{name}"
+        entity = registry.async_get(entity_id)
+        assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+        assert entity.entity_category is er.EntityCategory.DIAGNOSTIC
+        assert hass.states.get(entity_id) is None
     await hass.config_entries.async_unload(config_entry.entry_id)

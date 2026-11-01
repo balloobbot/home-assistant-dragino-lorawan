@@ -38,6 +38,10 @@ Devices are matched by catalog identity. Renaming a custom profile to a supporte
 model does not make it discoverable. One integration entry handles matching
 devices across all configured LoRaWAN connections.
 
+Battery percentage is enabled by default. Battery voltage, event count, and
+event duration are diagnostic entities disabled by default; enable them in the
+entity settings if needed.
+
 Battery percentage comes from LoRaWAN device-status reports. It remains unknown
 until the network server supplies a battery level. Battery voltage comes from
 sensor uplinks; the integration does not estimate a percentage from voltage.

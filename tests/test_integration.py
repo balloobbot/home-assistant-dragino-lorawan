@@ -21,7 +21,7 @@ import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 
-@pytest.mark.usefixtures("connection_entry")
+@pytest.mark.usefixtures("connection_entry", "entity_registry_enabled_by_default")
 async def test_readings(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
@@ -158,7 +158,7 @@ async def test_optional_probes(
     """Disable optional LHT65 probes until the user enables them."""
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-    for key in ("illuminance", "external_voltage", "external_count"):
+    for key in ("illuminance", "external_voltage", "external_count", "battery_voltage"):
         entity = er.async_get(hass).async_get(f"sensor.garden_{key}")
         assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
     await hass.config_entries.async_unload(config_entry.entry_id)
