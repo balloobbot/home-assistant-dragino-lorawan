@@ -92,6 +92,21 @@ async def async_setup_entry(
 
     @callback
     def added(coordinator: DraginoCoordinator) -> None:
+        if isinstance(coordinator.data, (LHT65, LDS02, LWL02)):
+            async_add_entities(
+                [
+                    DraginoBattery(
+                        coordinator,
+                        SensorEntityDescription(
+                            key="battery",
+                            device_class=SensorDeviceClass.BATTERY,
+                            native_unit_of_measurement=PERCENTAGE,
+                            state_class=SensorStateClass.MEASUREMENT,
+                            entity_category=EntityCategory.DIAGNOSTIC,
+                        ),
+                    )
+                ]
+            )
         if isinstance(coordinator.data, LHT65):
             async_add_entities(
                 LHT65Sensor(coordinator, description) for description in LHT65_SENSORS
@@ -263,3 +278,19 @@ class ContactSensor(LoRaWANEntity[DraginoDevice], SensorEntity):
         if TYPE_CHECKING:
             assert isinstance(device, ContactDevice)
         return self.entity_description.value_fn(device)
+
+
+class DraginoBattery(LoRaWANEntity[DraginoDevice], SensorEntity):
+    """Represent the battery level reported through LoRaWAN status."""
+
+    coordinator: DraginoCoordinator
+
+    @property
+    @override
+    def device_info(self) -> DeviceInfo:
+        return self.coordinator.device_info
+
+    @property
+    @override
+    def native_value(self) -> float | None:
+        return self.device.battery_level

@@ -22,9 +22,9 @@ Assistant `config/custom_components` directory and restart.
 | Model | Entities | Connections |
 | --- | --- | --- |
 | LT-22222-L | Two relays, two digital outputs, two digital inputs, voltage, current, and counters | ChirpStack and The Things Network / The Things Stack |
-| LDS02 | Door state, open alarm, event count, last opening duration, and battery voltage | ChirpStack and The Things Network / The Things Stack |
-| LWL02 | Water leak, event count, last leak duration, and battery voltage | ChirpStack and The Things Network / The Things Stack |
-| LHT65 | Temperature, humidity, battery voltage, and external probe readings | The Things Network / The Things Stack |
+| LDS02 | Door state, open alarm, event count, last opening duration, battery percentage, and battery voltage | ChirpStack and The Things Network / The Things Stack |
+| LWL02 | Water leak, event count, last leak duration, battery percentage, and battery voltage | ChirpStack and The Things Network / The Things Stack |
+| LHT65 | Temperature, humidity, battery percentage, battery voltage, and external probe readings | The Things Network / The Things Stack |
 
 LT-22222-L input measurements depend on its reporting mode. LHT65 illuminance,
 external voltage, and external counter entities are disabled by default; enable
@@ -38,7 +38,13 @@ Devices are matched by catalog identity. Renaming a custom profile to a supporte
 model does not make it discoverable. One integration entry handles matching
 devices across all configured LoRaWAN connections.
 
+Battery percentage comes from LoRaWAN device-status reports. It remains unknown
+until the network server supplies a battery level. Battery voltage comes from
+sensor uplinks; the integration does not estimate a percentage from voltage.
+
 Readings remain unknown until an uplink or status report supplies them.
+
+Brand images are included in the integration's `brand` directory.
 
 ## Development
 

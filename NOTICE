@@ -1,2 +1,6 @@
 Integration code adapted from the Home Assistant LoRaWAN proof of concept.
 Copyright The Home Assistant Authors. Licensed under Apache License 2.0.
+
+Brand images belong to their respective manufacturers.
+Dragino icon: https://github.com/dragino
+Dragino logo: https://github.com/TheThingsNetwork/lorawan-devices/blob/master/vendor/dragino/logo.png

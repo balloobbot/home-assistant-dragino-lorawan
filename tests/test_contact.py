@@ -3,6 +3,7 @@
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
+from homeassistant.components.lorawan.websocket_api import _snapshot
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from lorawan_connection import DeviceDescriptor, RemovedEvent, UplinkEvent
@@ -78,6 +79,15 @@ async def test_contact_entities(
     )
     assert hass.states.get("sensor.garden_last_event_duration").state == "0"
     entity = er.async_get(hass).async_get(binary)
+    metadata = next(
+        device
+        for device in _snapshot(hass)["devices"]
+        if device["dev_eui"] == descriptor.dev_eui
+    )
+    assert metadata["device_id"] == entity.device_id
+    assert metadata["support"] == "supported"
+    assert metadata["connection"]["entry_id"] == "network"
+    assert metadata["last_uplink"] == event.received_at.isoformat()
     assert (
         entity.unique_id
         == f"network:{descriptor.dev_eui}:{'contact' if model is LDS02 else 'moisture'}"
