@@ -18,13 +18,15 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import DraginoConfigEntry
-from ._vendor.dragino_lorawan import LHT65, LT22222, DraginoDevice
+from ._vendor.dragino_lorawan import LDS02, LHT65, LT22222, LWL02, DraginoDevice
+from ._vendor.dragino_lorawan.contact import ContactDevice
 from .coordinator import DraginoCoordinator
 from .entity import DraginoEntity, async_setup_entities
 
@@ -93,6 +95,12 @@ async def async_setup_entry(
         if isinstance(coordinator.data, LHT65):
             async_add_entities(
                 LHT65Sensor(coordinator, description) for description in LHT65_SENSORS
+            )
+
+        elif isinstance(coordinator.data, (LDS02, LWL02)):
+            async_add_entities(
+                ContactSensor(coordinator, description)
+                for description in CONTACT_SENSORS
             )
 
     entry.async_on_unload(entry.runtime_data.subscribe_coordinator_added(added))
@@ -201,4 +209,57 @@ class LHT65Sensor(LoRaWANEntity[DraginoDevice], SensorEntity):
         device = self.device
         if TYPE_CHECKING:
             assert isinstance(device, LHT65)
+        return self.entity_description.value_fn(device)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ContactSensorDescription(SensorEntityDescription):
+    """Describe a door or leak measurement."""
+
+    value_fn: Callable[[ContactDevice], float | int | None]
+
+
+CONTACT_SENSORS = (
+    ContactSensorDescription(
+        key="battery_voltage",
+        translation_key="battery_voltage",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda device: device.battery_voltage,
+    ),
+    ContactSensorDescription(
+        key="event_count",
+        translation_key="event_count",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda device: device.event_count,
+    ),
+    ContactSensorDescription(
+        key="last_duration",
+        translation_key="last_duration",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        value_fn=lambda device: device.last_duration,
+    ),
+)
+
+
+class ContactSensor(LoRaWANEntity[DraginoDevice], SensorEntity):
+    """Represent a door or leak sensor measurement."""
+
+    coordinator: DraginoCoordinator
+    entity_description: ContactSensorDescription
+
+    @property
+    @override
+    def device_info(self) -> DeviceInfo:
+        return self.coordinator.device_info
+
+    @property
+    @override
+    def native_value(self) -> float | int | None:
+        device = self.device
+        if TYPE_CHECKING:
+            assert isinstance(device, ContactDevice)
         return self.entity_description.value_fn(device)

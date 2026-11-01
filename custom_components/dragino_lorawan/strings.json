@@ -16,6 +16,9 @@
     "binary_sensor": {
       "digital_input": {
         "name": "Digital input {channel}"
+      },
+      "door_open_alarm": {
+        "name": "Door open alarm"
       }
     },
     "sensor": {
@@ -42,6 +45,12 @@
       },
       "voltage_count": {
         "name": "Voltage count {channel}"
+      },
+      "event_count": {
+        "name": "Event count"
+      },
+      "last_duration": {
+        "name": "Last event duration"
       }
     },
     "switch": {

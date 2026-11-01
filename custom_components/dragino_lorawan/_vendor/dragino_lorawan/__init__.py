@@ -12,6 +12,7 @@ from lorawan_connection import (
     EventType,
 )
 
+from .contact import LDS02, LWL02
 from .lht65 import LHT65
 
 _LOGGER = logging.getLogger(__name__)
@@ -127,10 +128,10 @@ class LT22222(Device):
         )
 
 
-type DraginoDevice = LT22222 | LHT65
+type DraginoDevice = LT22222 | LHT65 | LDS02 | LWL02
 
 
 class DraginoDevices(DeviceCollection[DraginoDevice]):
     """Supported Dragino catalog models."""
 
-    DEVICES = (LT22222, LHT65)
+    DEVICES = (LT22222, LHT65, LDS02, LWL02)

@@ -22,6 +22,8 @@ Assistant `config/custom_components` directory and restart.
 | Model | Entities | Connections |
 | --- | --- | --- |
 | LT-22222-L | Two relays, two digital outputs, two digital inputs, voltage, current, and counters | ChirpStack and The Things Network / The Things Stack |
+| LDS02 | Door state, open alarm, event count, last opening duration, and battery voltage | ChirpStack and The Things Network / The Things Stack |
+| LWL02 | Water leak, event count, last leak duration, and battery voltage | ChirpStack and The Things Network / The Things Stack |
 | LHT65 | Temperature, humidity, battery voltage, and external probe readings | The Things Network / The Things Stack |
 
 LT-22222-L input measurements depend on its reporting mode. LHT65 illuminance,
@@ -46,7 +48,7 @@ It uses the shared LoRaWAN dependency provided by Home Assistant.
 Tests use Home Assistant's official pytest helpers and an in-memory connection.
 They cover discovery, decoded readings, entity identity, connection loss,
 reconnection, and removal, plus output commands and errors.
-Payload tests use codec examples. LT-22222-L commands were also exercised against a simulated ChirpStack radio during the original PoC.
+Payload tests use codec examples, including the ChirpStack LDS02 and LWL02 fixtures. LT-22222-L commands were also exercised against a simulated ChirpStack radio during the original PoC.
 
 ```sh
 uv sync --group dev
@@ -60,3 +62,5 @@ The development environment pins Core and its test helpers to the same revision.
 CI also tests current Home Assistant `dev`.
 
 Payload references: [Dragino TTN codecs](https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor/dragino).
+
+LDS02 and LWL02 profiles were identified from [LoRaWANDeviceProfiles](https://github.com/BenAhrdt/LoRaWANDeviceProfiles/tree/main/DeviceProfiles/Dragino) and checked against the [ChirpStack catalog](https://github.com/chirpstack/chirpstack-device-profiles/tree/master/vendors/dragino).
