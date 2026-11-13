@@ -32,7 +32,8 @@ jobs:
           persist-credentials: false
       - if: matrix.homeassistant == 'dev'
         run: |
-          uv pip install -e .core -e .core/packages/pytest-home-assistant
+          uv pip uninstall pytest-home-assistant
+          uv pip install -e .core -e .core/packages/pytest-homeassistant
           cd .core
           ../.venv/bin/python -m script.translations develop --integration sensor
       - run: uv run --no-sync python script/prepare_tests.py
