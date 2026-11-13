@@ -23,7 +23,7 @@ Assistant `config/custom_components` directory and restart.
 | --- | --- | --- |
 | LT-22222-L | Two relays, two digital outputs, two digital inputs, voltage, current, and counters | ChirpStack and The Things Network / The Things Stack |
 | LDS02 | Door state, open alarm, event count, last opening duration, battery percentage, and battery voltage | ChirpStack and The Things Network / The Things Stack |
-| LWL02 | Water leak, event count, last leak duration, battery percentage, and battery voltage | ChirpStack and The Things Network / The Things Stack |
+| LWL02 | Water leak, event count, last leak duration, battery percentage, battery voltage, reporting interval, and Request reset | ChirpStack and The Things Network / The Things Stack |
 | LHT65 | Temperature, humidity, battery percentage, battery voltage, and external probe readings | The Things Network / The Things Stack |
 
 LT-22222-L input measurements depend on its reporting mode. LHT65 illuminance,
@@ -33,6 +33,16 @@ the ones that match your attached probe.
 Relay and digital-output commands wait up to 30 seconds for acknowledgement.
 Their state changes when the device reports it. A timeout does not remove a
 queued command from the network server.
+
+For LWL02, **Reporting interval** sets the periodic keep-alive interval in seconds.
+It shows the last value requested during this Home Assistant session, not a
+setting read from the sensor. Leak-triggered reports remain enabled.
+**Request reset** clears both the event count and last leak duration on the sensor.
+The displayed readings change when the sensor reports them.
+
+Both controls queue a downlink and return without waiting for device acknowledgement.
+The sensor receives it after a subsequent uplink. The connection's API key needs
+downlink write permission. See [Dragino's downlink commands](https://wiki.dragino.com/docs/LoRaWAN-End-Node/door-water-leak-contact-sensors/lwl02/#44-downlink-payload).
 
 Devices are matched by catalog identity. Renaming a custom profile to a supported
 model does not make it discoverable. One integration entry handles matching

@@ -78,3 +78,19 @@ class LWL02(ContactDevice):
     model_name = "LWL02"
     mode = 2
     status_mask = 0x40
+
+    async def async_set_reporting_interval(self, seconds: int) -> None:
+        """Queue a keep-alive interval in seconds."""
+        if not 1 <= seconds <= 0xFFFFFF:
+            raise ValueError(
+                "Reporting interval must be between 1 and 16777215 seconds"
+            )
+        await self.async_send_downlink(
+            data=b"\x01" + seconds.to_bytes(3, "big"),
+            f_port=1,
+            wait_for_ack=False,
+        )
+
+    async def async_reset_count(self) -> None:
+        """Queue a reset of the event count and last leak duration."""
+        await self.async_send_downlink(data=b"\xa6\x01", f_port=1, wait_for_ack=False)

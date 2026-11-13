@@ -14,7 +14,13 @@ from .coordinator import DraginoCoordinator
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 type DraginoConfigEntry = ConfigEntry[DeviceManager[DraginoDevice, DraginoCoordinator]]
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.NUMBER,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: DraginoConfigEntry) -> None:

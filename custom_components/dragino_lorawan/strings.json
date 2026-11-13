@@ -60,6 +60,16 @@
       "relay": {
         "name": "Relay {channel}"
       }
+    },
+    "button": {
+      "request_reset": {
+        "name": "Request reset"
+      }
+    },
+    "number": {
+      "reporting_interval": {
+        "name": "Reporting interval"
+      }
     }
   },
   "exceptions": {
@@ -68,6 +78,9 @@
     },
     "command_timeout": {
       "message": "Timed out waiting for device acknowledgement."
+    },
+    "interval_whole_seconds": {
+      "message": "The reporting interval must be a whole number of seconds."
     }
   }
 }

@@ -1,0 +1,14 @@
+{
+  "entity": {
+    "button": {
+      "request_reset": {
+        "default": "mdi:counter"
+      }
+    },
+    "number": {
+      "reporting_interval": {
+        "default": "mdi:timer-outline"
+      }
+    }
+  }
+}
